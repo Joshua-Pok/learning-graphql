@@ -117,3 +117,36 @@ In GraphQL we can define fields that return lists of any other graph ql type
 
 
 Basically ! means not nullable
+
+
+## Lists and Slices
+
+**graphql.NewList**: This is a type wrapper. We take an existing type like "bookType" and pass it into this function. This tells graphql to expect an array of those objects rather than a single one
+
+
+Slice Resolution:
+
+Whenever a resolver returns a go slice, the engine automatically iterates over each element applying bookType definition to every item in the slice
+
+
+# Field Level Resolvers
+
+
+In Production, data is usually normalized. We do not store entire author inside every book, we can move the link logic out of the data structures and into the graphql execution layer
+
+
+Field Level Resolvers allow us to resolve a specific field by looking up based on parent object's data.
+
+
+
+# Context and Mock Authentication
+
+
+Context is the bucket of data that travels along with the query to every single resolver in the tree
+
+When we call graphql.Do we can pass a context.Context object. 
+
+We can then access this context inside res.Context
+
+
+We can ensure that context includes a secret token before returning any fields

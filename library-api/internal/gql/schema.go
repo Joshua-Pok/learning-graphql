@@ -1,12 +1,12 @@
 package schema
 
-import "github.com/graphql-go/graphql"
-import "github.com/Joshua-Pok/library-api/internal/models"
+import (
+	"fmt"
 
-var books = []models.Book{
-	{ID: "1", Title: "1984"},
-	{ID: "2", Title: "The Hobbit"},
-}
+	"github.com/Joshua-Pok/library-api/internal/data"
+	"github.com/Joshua-Pok/library-api/internal/models"
+	"github.com/graphql-go/graphql"
+)
 
 var rootQuery = graphql.NewObject(graphql.ObjectConfig{ //object is basically a typek
 	Name: "RootQuery",
@@ -25,14 +25,33 @@ var rootQuery = graphql.NewObject(graphql.ObjectConfig{ //object is basically a 
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				id := p.Args["id"].(string)
-				for _, book := range books {
+				for _, book := range data.Books {
 					if book.ID == id {
+						book.AuthorID = "1"
 						return book, nil
 					}
 				}
 				return nil, nil
 
 			},
+		},
+		"books": &graphql.Field{
+			Type: graphql.NewList(bookType),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				return data.Books, nil
+			},
+		},
+	},
+})
+
+var authorType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "authorType",
+	Fields: graphql.Fields{
+		"id": &graphql.Field{
+			Type: graphql.String,
+		},
+		"name": &graphql.Field{
+			Type: graphql.String,
 		},
 	},
 })
@@ -45,6 +64,26 @@ var bookType = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"title": &graphql.Field{
 			Type: graphql.String,
+		},
+		"author": &graphql.Field{
+			Type: authorType,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+
+				fmt.Printf("TYPE: %T\n", p.Source)
+				book, ok := p.Source.(models.Book)
+				if !ok {
+					fmt.Println("Not a book unable to cast")
+				}
+				fmt.Printf("Book author ID: %s\n", book.AuthorID)
+				for _, author := range data.Authors {
+					if author.ID == book.AuthorID {
+						return author, nil
+					}
+				}
+
+				return nil, nil
+
+			},
 		},
 	},
 })
