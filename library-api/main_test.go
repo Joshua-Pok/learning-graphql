@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Joshua-Pok/library-api/internal/gql"
@@ -176,5 +177,36 @@ func TestFetchBookAndAuthor(t *testing.T) {
 	if name != "JKRowling" {
 		t.Fatal("Author is not jk rowling ")
 	}
+
+}
+
+type contextKey string
+
+func TestTokenAuth(t *testing.T) {
+
+	queryString := "{ book(id: \"1\") {author { name } } }"
+
+	schema, err := schema.NewSchema()
+	if err != nil {
+		t.Error("error creating schema", err)
+	}
+
+	const userKey contextKey = "user"
+
+	ctx := context.WithValue(context.Background(), "admin-secret")
+
+	params := graphql.Params{
+		Schema:        schema,
+		RequestString: queryString,
+		Context:       ctx,
+	}
+
+	res := graphql.Do(params)
+	if len(res.Errors) > 0 {
+		t.Errorf("Error executing query: %v", err)
+
+	}
+
+	data := res.Data.(map[string]interface{})
 
 }

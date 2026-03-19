@@ -69,6 +69,7 @@ var bookType = graphql.NewObject(graphql.ObjectConfig{
 			Type: authorType,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
+				token := p.Context.Value(userkey)
 				fmt.Printf("TYPE: %T\n", p.Source)
 				book, ok := p.Source.(models.Book)
 				if !ok {
