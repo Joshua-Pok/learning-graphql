@@ -8,14 +8,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func InitDB() {
+func InitDB() *sqlx.DB {
 	db, err := sqlx.Open("sqlite3", "blog.db")
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if db != nil {
-		defer db.Close()
 	}
 
 	schema, err := os.ReadFile("./migrations/001_init.sql")
