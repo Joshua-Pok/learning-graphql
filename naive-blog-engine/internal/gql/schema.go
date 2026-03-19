@@ -115,8 +115,31 @@ func NewSchema(database *sqlx.DB) (graphql.Schema, error) {
 						Type: graphql.String,
 					},
 					"author": &graphql.ArgumentConfig{
-						Type: graphql.String
+						Type: graphql.String,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					args := p.Args
+
+					InsertString := "INSERT INTO posts (title, content, author) VALUES (?, ?, ?)"
+					title := args["title"].(string)
+					content := args["content"].(string)
+					author := args["author"].(string)
+
+					res, err := database.Exec(InsertString, title, content, author)
+					if err != nil {
+						log.Fatalf("Error inserting values: %v", err)
 					}
+
+					id, err := res.LastInsertId()
+					if err != nil {
+						return nil, err
+					}
+
+					return map[string]interface{}{
+						"id": id,
+					}, nil
+
 				},
 			},
 		},
