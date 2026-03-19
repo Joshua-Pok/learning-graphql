@@ -150,3 +150,12 @@ We can then access this context inside res.Context
 
 
 We can ensure that context includes a secret token before returning any fields
+
+
+
+## When to choose GraphQL Over Rest.
+
+1) Complex or nested Requirements
+2) Multiple Client Platforms with different data needs
+3) Evolving APIs
+4) Aggregating Data from Multiple Sources

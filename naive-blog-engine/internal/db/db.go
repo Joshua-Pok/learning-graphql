@@ -20,5 +20,12 @@ func InitDB() *sqlx.DB {
 	}
 
 	db.MustExec(string(schema))
+
+	migration, err := os.ReadFile("./migrations/002_comments.sql")
+	if err != nil {
+		log.Fatalf(err)
+	}
+
+	db.MustExec(string(migration))
 	return db
 }

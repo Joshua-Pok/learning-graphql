@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
@@ -65,4 +66,72 @@ func TestFetchPost(t *testing.T) {
 		t.Errorf("expected content, got nil")
 	}
 
+}
+
+func TestFetchAllPosts(t *testing.T) {
+	database := db.InitDB()
+	defer database.Close()
+
+	database.MustExec(`
+INSERT INTO posts (title, content, author, created_at) VALUES
+(First Post", "This is the content of the first post", "Alice", "2026-03-19"),
+(Second Post", "This is the content of the second post", "Bob", "2026-03-19"),
+(Third Post", "This is the content of the third post", "Charlie", "2026-03-19");
+`)
+
+	database.MustExec(`
+INSERT INTO comments (post_id, content) VALUES
+(1", "Comment A1"),
+(1", "Comment A2"),
+(2", "Comment B1"),
+(2", "Comment B2"),
+(3", "Comment C1"),
+(3", "Comment C2");
+`)
+
+	queryString := " { posts { title comments { content } } }"
+
+	schema, err := gql.NewSchema(database)
+	if err != nil {
+		t.Errorf("Error Creating schema")
+	}
+
+	ctx := context.WithValue(context.Background(), "db", database)
+
+	params := graphql.Params{
+		Schema:        schema,
+		RequestString: queryString,
+		Context:       ctx,
+	}
+
+	res := graphql.Do(params)
+	if len(res.Errors) > 0 {
+		t.Errorf("Error executing query: %v", res.Errors)
+
+	}
+
+	data := res.Data.(map[string]interface{})
+	posts, ok := data["posts"].([]interface{}) //list of posts
+	if !ok {
+		t.Fatalf("Post filed missing or wrong type")
+	}
+
+	if len(posts) != 3 {
+		t.Fatalf("expected 3 posts, got %d", len(posts))
+	}
+
+	for _, p := range posts {
+		postMap := p.(map[string]interface{})
+
+		comments, ok := postMap["comments"].([]interface{})
+		if !ok {
+			t.Fatalf("comments missing or wrong type")
+		}
+
+		if len(comments) != 2 {
+			t.Fatalf("expected 2 comments, got %d", len(comments))
+
+		}
+
+	}
 }
