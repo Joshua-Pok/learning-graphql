@@ -1,9 +1,14 @@
 package task
 
-import "github.com/google/uuid"
+import (
+	"sync"
+
+	"github.com/google/uuid"
+)
 
 type Store struct {
 	Tasks []*Task
+	mu    sync.RWMutex
 }
 
 func NewStore() *Store { //returns initialized store
@@ -13,8 +18,19 @@ func NewStore() *Store { //returns initialized store
 
 func (s *Store) Add(t Task) {
 
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	t.ID = uuid.New() //assign unique id to task
 
 	s.Tasks = append(s.Tasks, &t) // append it to internal slice
 
+}
+
+func (s *Store) List() []*Task {
+	s.mu.RLock() //allows multiple people to view while still blocking if someone is adding one
+
+	defer s.mu.RUnlock()
+
+	return s.Tasks
 }
