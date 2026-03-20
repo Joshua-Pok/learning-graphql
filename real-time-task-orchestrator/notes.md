@@ -19,3 +19,11 @@ This is more efficient than a standard mutex for things where users will likely 
 ## Slices are not thread safe in Go
 
 
+# Channels
+
+In Go, Channels(chan) are the idiomatic way to communicate between concurrent processes,
+
+We implement a naive observer pattern:
+
+1) Store will maintain a list of active channels
+2) Store broadcasts new tasks to them

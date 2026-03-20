@@ -44,3 +44,19 @@ func TestStore_ConcurrentAdd(t *testing.T) {
 	}
 
 }
+
+func TestStore_Subscribe(t *testing.T) {
+
+	s := Store{} // new store
+
+	channel := s.Subscribe()
+
+
+	go func(){
+		s.Add(Task{Title: "Observer Task"})
+	}
+
+
+	case received := 
+
+}

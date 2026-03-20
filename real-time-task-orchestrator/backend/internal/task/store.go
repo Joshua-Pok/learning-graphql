@@ -3,13 +3,13 @@ package task
 import (
 	"sync"
 
-	"github.com/Joshua-Pok/task-orchestrator/internal/gql/generated"
 	"github.com/google/uuid"
 )
 
 type Store struct {
-	Tasks []*Task
-	mu    sync.RWMutex
+	Tasks       []*Task
+	mu          sync.RWMutex
+	subscribers []chan Task
 }
 
 func NewStore() *Store { //returns initialized store
@@ -17,7 +17,7 @@ func NewStore() *Store { //returns initialized store
 	return new_store
 }
 
-func (s *Store) Add(t generated.Task) {
+func (s *Store) Add(t Task) {
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -34,4 +34,17 @@ func (s *Store) List() []*Task {
 	defer s.mu.RUnlock()
 
 	return s.Tasks
+}
+
+func (s *Store) Subscribe() <-chan Task {
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	newChan := make(chan Task, 1)
+
+	s.subscribers = append(s.subscribers, newChan)
+
+	return newChan
+
 }

@@ -15,14 +15,17 @@ import (
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input *generated.CreateTaskInput) (*generated.Task, error) {
-	newTask := &generated.Task{
-		ID:    uuid.New().(string),
+	id := uuid.New()
+
+	r.Store.Add(task.Task{
+		ID:    id,
 		Title: input.Title,
-	}
+	})
 
-	r.Store.Add(newTask)
-
-	return newTask, nil
+	return &generated.Task{
+		ID:    id.String(),
+		Title: input.Title,
+	}, nil
 
 }
 
