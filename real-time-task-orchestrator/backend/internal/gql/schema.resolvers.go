@@ -9,7 +9,22 @@ import (
 	"context"
 
 	"github.com/Joshua-Pok/task-orchestrator/internal/gql/generated"
+	"github.com/Joshua-Pok/task-orchestrator/internal/task"
+	"github.com/google/uuid"
 )
+
+// CreateTask is the resolver for the createTask field.
+func (r *mutationResolver) CreateTask(ctx context.Context, input *generated.CreateTaskInput) (*generated.Task, error) {
+	newTask := &generated.Task{
+		ID:    uuid.New().(string),
+		Title: input.Title,
+	}
+
+	r.Store.Add(newTask)
+
+	return newTask, nil
+
+}
 
 // Tasks is the resolver for the tasks field.
 func (r *queryResolver) Tasks(ctx context.Context) ([]*generated.Task, error) {
@@ -28,7 +43,11 @@ func (r *queryResolver) Tasks(ctx context.Context) ([]*generated.Task, error) {
 	return result, nil
 }
 
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

@@ -2,6 +2,13 @@
 
 package generated
 
+type CreateTaskInput struct {
+	Title string `json:"title"`
+}
+
+type Mutation struct {
+}
+
 type Query struct {
 }
 

@@ -3,6 +3,7 @@ package task
 import (
 	"sync"
 
+	"github.com/Joshua-Pok/task-orchestrator/internal/gql/generated"
 	"github.com/google/uuid"
 )
 
@@ -16,7 +17,7 @@ func NewStore() *Store { //returns initialized store
 	return new_store
 }
 
-func (s *Store) Add(t Task) {
+func (s *Store) Add(t generated.Task) {
 
 	s.mu.Lock()
 	defer s.mu.Unlock()

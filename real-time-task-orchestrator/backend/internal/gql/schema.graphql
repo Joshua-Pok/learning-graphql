@@ -8,3 +8,14 @@ id: ID!
 type Query{
 tasks: [Task!]!
 }
+
+
+input CreateTaskInput{
+title: String!
+
+}
+
+
+type Mutation{
+createTask(input: CreateTaskInput): Task!
+}
