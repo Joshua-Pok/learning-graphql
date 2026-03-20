@@ -12,6 +12,9 @@ type Mutation struct {
 type Query struct {
 }
 
+type Subscription struct {
+}
+
 type Task struct {
 	ID     string `json:"id"`
 	Title  string `json:"title"`

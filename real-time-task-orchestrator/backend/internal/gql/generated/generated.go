@@ -28,6 +28,7 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -42,6 +43,10 @@ type ComplexityRoot struct {
 		Tasks func(childComplexity int) int
 	}
 
+	Subscription struct {
+		TaskAdded func(childComplexity int) int
+	}
+
 	Task struct {
 		ID     func(childComplexity int) int
 		Status func(childComplexity int) int
@@ -54,6 +59,9 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Tasks(ctx context.Context) ([]*Task, error)
+}
+type SubscriptionResolver interface {
+	TaskAdded(ctx context.Context) (<-chan *Task, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -88,6 +96,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Tasks(childComplexity), true
+
+	case "Subscription.taskAdded":
+		if e.ComplexityRoot.Subscription.TaskAdded == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Subscription.TaskAdded(childComplexity), true
 
 	case "Task.id":
 		if e.ComplexityRoot.Task.ID == nil {
@@ -166,6 +181,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, opCtx.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -212,6 +244,11 @@ title: String!
 
 type Mutation{
 createTask(input: CreateTaskInput): Task!
+}
+
+
+type Subscription{
+taskAdded: Task!
 }
 `, BuiltIn: false},
 }
@@ -484,6 +521,43 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_taskAdded(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_taskAdded,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Subscription().TaskAdded(ctx)
+		},
+		nil,
+		ec.marshalNTask2ᚖgithubᚗcomᚋJoshuaᚑPokᚋtaskᚑorchestratorᚋinternalᚋgqlᚋgeneratedᚐTask,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_taskAdded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Task_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Task_title(ctx, field)
+			case "status":
+				return ec.fieldContext_Task_status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
 		},
 	}
 	return fc, nil
@@ -2179,6 +2253,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	}
 
 	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		graphql.AddErrorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "taskAdded":
+		return ec._Subscription_taskAdded(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
 }
 
 var taskImplementors = []string{"Task"}

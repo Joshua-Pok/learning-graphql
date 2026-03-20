@@ -19,3 +19,8 @@ title: String!
 type Mutation{
 createTask(input: CreateTaskInput): Task!
 }
+
+
+type Subscription{
+taskAdded: Task!
+}

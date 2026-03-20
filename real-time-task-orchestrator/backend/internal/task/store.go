@@ -26,6 +26,17 @@ func (s *Store) Add(t Task) {
 
 	s.Tasks = append(s.Tasks, &t) // append it to internal slice
 
+	for _, sub := range s.subscribers {
+		//wrap in select default pattern to make it non blocking if the channel buffer is full the sub <- t operation will block forever
+
+		//select statements are switch statements that branch on channel operations, select with default will never block
+		select {
+		case sub <- t:
+		default:
+		}
+
+	}
+
 }
 
 func (s *Store) List() []*Task {

@@ -7,6 +7,7 @@ package gql
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Joshua-Pok/task-orchestrator/internal/gql/generated"
 	"github.com/Joshua-Pok/task-orchestrator/internal/task"
@@ -26,7 +27,6 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input *generated.Crea
 		ID:    id.String(),
 		Title: input.Title,
 	}, nil
-
 }
 
 // Tasks is the resolver for the tasks field.
@@ -46,11 +46,43 @@ func (r *queryResolver) Tasks(ctx context.Context) ([]*generated.Task, error) {
 	return result, nil
 }
 
+// TaskAdded is the resolver for the taskAdded field.
+func (r *subscriptionResolver) TaskAdded(ctx context.Context) (<-chan *generated.Task, error) {
+	ch := r.Store.Subscribe() // acquire internal channel
+	graphqlCh := make(chan *generated.Task, 1)
+
+	//start background goroutine
+	go func() {
+		defer close(graphqlCh)
+		for {
+			select{
+			case t := <- ch:
+			graphqlCh <- &generated.Task{
+					ID: t.ID.String()
+					Title: t.Title,
+				}
+			case <-ctx.Done(): //client disconnect
+				return
+
+			}
+		}
+
+	}()
+
+
+	return graphqlCh, nil
+
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
