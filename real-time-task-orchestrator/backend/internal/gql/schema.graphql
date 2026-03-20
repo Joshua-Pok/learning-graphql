@@ -1,0 +1,10 @@
+type Task{
+id: ID!
+  title: String!
+  status: String!
+}
+
+
+type Query{
+tasks: [Task!]!
+}
